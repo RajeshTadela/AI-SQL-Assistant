@@ -2,25 +2,28 @@ from ai.sql_generator import generate_sql
 from database.sql_executor import execute_query
 from prompts.sql_prompt import build_sql_prompt
 from ai.sql_corrector import correct_sql
-from ai.insight_generator import generate_insights
 
 
-def ask_database(question):
+def ask_database(question: str, config: dict):
 
-    # Default response
     response = {
         "question": question,
         "sql": "",
         "data": None,
-        "insights": "",
         "error": None
     }
 
     try:
+
         # -------------------------
         # Generate SQL
         # -------------------------
-        sql = generate_sql(question)
+
+        sql = generate_sql(
+            question,
+            config
+        )
+
         response["sql"] = sql
 
         print("\nGenerated SQL:\n")
@@ -29,7 +32,12 @@ def ask_database(question):
         # -------------------------
         # Execute SQL
         # -------------------------
-        data = execute_query(sql)
+
+        data = execute_query(
+            sql,
+            config
+        )
+
         response["data"] = data
 
     except Exception as sql_error:
@@ -38,9 +46,13 @@ def ask_database(question):
         print(sql_error)
 
         try:
+
             print("\nTrying to correct SQL...\n")
 
-            prompt = build_sql_prompt(question)
+            prompt = build_sql_prompt(
+                question,
+                config
+            )
 
             fixed_sql = correct_sql(
                 sql,
@@ -53,41 +65,55 @@ def ask_database(question):
             print("\nCorrected SQL:\n")
             print(fixed_sql)
 
-            data = execute_query(fixed_sql)
+            data = execute_query(
+                fixed_sql,
+                config
+            )
 
             response["data"] = data
 
         except Exception as final_error:
 
-            response["error"] = str(final_error)
+            error_message = str(final_error)
 
-            return response
+            if (
+                "429" in error_message
+                or "RESOURCE_EXHAUSTED" in error_message
+            ):
 
-    # -------------------------
-    # Generate Insights
-    # -------------------------
-    try:
+                error_message = (
+                    "⚠️ Gemini API quota exceeded. Please wait a minute and try again."
+                )
 
-        response["insights"] = generate_insights(
-            question,
-            response["data"]
-        )
-
-    except Exception as insight_error:
-
-        print("Insight Error:", insight_error)
-
-        response["insights"] = (
-            "⚠️ AI Business Insights are currently unavailable."
-        )
+            response["error"] = error_message
 
     return response
 
 
 if __name__ == "__main__":
 
-    q = input("Ask: ")
+    question = input("Ask: ")
 
-    result = ask_database(q)
+    config = {
+        "host": "localhost",
+        "port": 3306,
+        "user": "root",
+        "password": "YOUR_PASSWORD",
+        "database": "YOUR_DATABASE"
+    }
 
-    print(result)
+    result = ask_database(
+        question,
+        config
+    )
+
+    print("\nGenerated SQL:\n")
+    print(result["sql"])
+
+    print("\nResult:\n")
+    print(result["data"])
+
+    if result["error"]:
+
+        print("\nError:")
+        print(result["error"])

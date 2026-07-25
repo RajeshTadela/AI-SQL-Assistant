@@ -2,8 +2,10 @@ import pandas as pd
 from database.connector import get_connection
 
 
-def execute_query(query):
-    connection = get_connection()
+def execute_query(query, config):
+
+    connection = get_connection(config)
+
     cursor = connection.cursor()
 
     cursor.execute(query)
@@ -15,6 +17,4 @@ def execute_query(query):
     cursor.close()
     connection.close()
 
-    dataframe = pd.DataFrame(rows, columns=columns)
-
-    return dataframe
+    return pd.DataFrame(rows, columns=columns)

@@ -1,41 +1,45 @@
 from database.schema_reader import get_schema
 
 
-def infer_relationships():
-    """
-    Infer relationships based on matching column names.
-    """
+def infer_relationships(config):
 
-    schema = get_schema()
+    schema = get_schema(config)
 
     relationships = []
 
     tables = list(schema.keys())
 
-    for i in range(len(tables)):
-        table1 = tables[i]
+    for table1 in tables:
 
-        cols1 = [col[0].lower() for col in schema[table1]]
+        cols1 = [c[0] for c in schema[table1]]
 
-        for j in range(i + 1, len(tables)):
-            table2 = tables[j]
+        for table2 in tables:
 
-            cols2 = [col[0].lower() for col in schema[table2]]
+            if table1 == table2:
+                continue
 
-            common = set(cols1) & set(cols2)
+            cols2 = [c[0] for c in schema[table2]]
 
-            for column in common:
+            for col1 in cols1:
 
-                relationships.append(
-                    (table1, column, table2, column)
-                )
+                for col2 in cols2:
+
+                    if col1.lower() == col2.lower():
+
+                        relationships.append(
+                            (
+                                table1,
+                                col1,
+                                table2,
+                                col2
+                            )
+                        )
 
     return relationships
 
 
 if __name__ == "__main__":
 
-    relationships = infer_relationships()
+    for relation in infer_relationships():
 
-    for rel in relationships:
-        print(rel)
+        print(relation)
