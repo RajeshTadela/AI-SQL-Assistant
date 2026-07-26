@@ -2,5 +2,5 @@ streamlit
 pandas
 mysql-connector-python
 python-dotenv
-google-generativeai
+google-genai
 openpyxl
