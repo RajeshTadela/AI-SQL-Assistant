@@ -36,18 +36,27 @@ def infer_mysql_type(dtype):
 
 
 def create_table(cursor, table_name, dataframe):
+    """
+    Create a MySQL table with an auto-generated primary key.
+    """
 
-    columns = []
+    columns = [
+        "`id` INT AUTO_INCREMENT PRIMARY KEY"
+    ]
 
     for column_name, dtype in dataframe.dtypes.items():
 
         mysql_type = infer_mysql_type(dtype)
 
-        columns.append(f"`{column_name}` {mysql_type}")
+        columns.append(
+            f"`{column_name}` {mysql_type}"
+        )
+
+    column_query = ",\n".join(columns)
 
     query = f"""
-    CREATE TABLE IF NOT EXISTS `{table_name}`(
-        {", ".join(columns)}
+    CREATE TABLE IF NOT EXISTS `{table_name}` (
+        {column_query}
     );
     """
 
